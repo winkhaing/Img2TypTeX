@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Img2TypTeX Snip</title>
+<style>
+  /* This window is positioned and sized (in lib.rs::trigger_snip) to exactly
+     cover one monitor's physical bounds, so every coordinate used below is
+     already local to that monitor - no translation needed before sending
+     the selection rect back to the `capture_and_recognize` command. */
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.25);
+    cursor: crosshair;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    user-select: none;
+  }
+
+  #hint {
+    position: fixed;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 20, 22, 0.85);
+    color: #eee;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  #hint .key {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin: 0 2px;
+    font-size: 11px;
+  }
+
+  /* The selection box uses a huge spread box-shadow as a "spotlight": the
+     box itself stays transparent so the screen behind it reads clearly,
+     while everywhere outside it gets darkened by the shadow. This avoids
+     needing four separate dimming panels around a cutout. */
+  #selection {
+    position: fixed;
+    display: none;
+    border: 1.5px solid #2dd4bf;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+  }
+
+  #dimensions {
+    position: absolute;
+    bottom: -24px;
+    left: 0;
+    background: rgba(20, 20, 22, 0.9);
+    color: #2dd4bf;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  #status {
+    position: fixed;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 20, 22, 0.9);
+    color: #2dd4bf;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    border: 1px solid rgba(45, 212, 191, 0.4);
+    display: none;
+  }
+</style>
+</head>
+<body>
+  <div id="hint">Drag to select the equation &nbsp;&middot;&nbsp; <span class="key">Esc</span> to cancel</div>
+  <div id="status">Recognising equation&hellip;</div>
+  <div id="selection">
+    <div id="dimensions"></div>
+  </div>
+
+  <script>
+    const { invoke } = window.__TAURI__.core;
+
+    const selectionEl = document.getElementById("selection");
+    const dimensionsEl = document.getElementById("dimensions");
+    const hintEl = document.getElementById("hint");
+    const statusEl = document.getElementById("status");
+
+    let dragStart = null;
+    let dragRect = null; // { x, y, width, height } in window-local logical px
+
+    function closeOverlay() {
+      invoke("close_current_window").catch(() => {});
+    }
+
+    function rectFromPoints(x0, y0, x1, y1) {
+      const x = Math.min(x0, x1);
+      const y = Math.min(y0, y1);
+      const width = Math.abs(x1 - x0);
+      const height = Math.abs(y1 - y0);
+      return { x, y, width, height };
+    }
+
+    function paintSelection(rect) {
+      selectionEl.style.display = "block";
+      selectionEl.style.left = `${rect.x}px`;
+      selectionEl.style.top = `${rect.y}px`;
+      selectionEl.style.width = `${rect.width}px`;
+      selectionEl.style.height = `${rect.height}px`;
+      dimensionsEl.textContent = `${Math.round(rect.width)} × ${Math.round(rect.height)}`;
+    }
+
+    window.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      dragStart = { x: e.clientX, y: e.clientY };
+      dragRect = rectFromPoints(dragStart.x, dragStart.y, dragStart.x, dragStart.y);
+      paintSelection(dragRect);
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!dragStart) return;
+      dragRect = rectFromPoints(dragStart.x, dragStart.y, e.clientX, e.clientY);
+      paintSelection(dragRect);
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (!dragStart) return;
+      const finalRect = rectFromPoints(dragStart.x, dragStart.y, e.clientX, e.clientY);
+      dragStart = null;
+
+      // A click with no meaningful drag is treated as "cancel", matching
+      // the common snipping-tool convention.
+      if (finalRect.width < 4 || finalRect.height < 4) {
+        closeOverlay();
+        return;
+      }
+
+      selectionEl.style.display = "none";
+      hintEl.style.display = "none";
+      statusEl.style.display = "block";
+      // The body's own background (a faint black tint, applied so the
+      // overlay reads as "active" before any drag starts) sits over the
+      // *entire* window the whole time, including the area the user just
+      // selected - the selection box only ever masked the area *outside*
+      // itself via its box-shadow. Left in place, that tint gets baked into
+      // every captured screenshot. Clear it now, before capture, so the
+      // region handed to OCR is the real screen content with no overlay
+      // tint at all.
+      document.body.style.background = "transparent";
+
+      const rect = {
+        x: Math.round(finalRect.x),
+        y: Math.round(finalRect.y),
+        width: Math.round(finalRect.width),
+        height: Math.round(finalRect.height),
+      };
+
+      // Give the webview a moment to actually paint the style changes above
+      // before the Rust side takes its screenshot - invoke() is async IPC,
+      // but nothing here guarantees the compositor has flushed the new
+      // (tint-free, selection-hidden) frame before that message is handled.
+      // A double rAF reliably waits for "next painted frame" in practice.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Fire-and-forget: the Rust side closes this window itself once
+          // OCR finishes and opens/refreshes the result window with the
+          // outcome (success or error), so there is nothing further for
+          // this window's own JS to do with the resolved promise.
+          invoke("capture_and_recognize", { rect }).catch(() => {});
+        });
+      });
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeOverlay();
+    });
+  </script>
+</body>
+</html>

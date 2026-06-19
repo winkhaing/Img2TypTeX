@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Img2TypTeX Result</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="app-header">
+      <div>
+        <h1>Img2TypTeX</h1>
+        <div class="subtitle">Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> anytime to snip</div>
+      </div>
+      <div class="row">
+        <button class="icon" id="reset-btn" title="Start Over" style="display: none;">&#128260;</button>
+        <button class="icon" id="theme-btn" title="Toggle theme">&#9728;</button>
+        <button class="icon" id="settings-btn" title="Settings">&#9881;</button>
+        <button class="icon danger" id="exit-btn" title="Exit Img2TypTeX">&#9211;</button>
+      </div>
+    </header>
+
+    <div id="content" class="empty-state">Loading&hellip;</div>
+  </div>
+
+  <script type="module">
+    import { latexToTypst } from "./lib/converter.js";
+    import { initTheme } from "./lib/theme.js";
+
+    const { invoke } = window.__TAURI__.core;
+    const { listen } = window.__TAURI__.event;
+
+    const contentEl = document.getElementById("content");
+    const resetBtn = document.getElementById("reset-btn");
+
+    initTheme(document.getElementById("theme-btn"));
+
+    document.getElementById("settings-btn").addEventListener("click", () => {
+      invoke("open_settings_window").catch(() => {});
+    });
+
+    // Quits the whole app, not just this window - same effect as the tray
+    // menu's "Quit" entry, for anyone who doesn't think to look in the tray.
+    document.getElementById("exit-btn").addEventListener("click", () => {
+      invoke("quit_app").catch(() => {});
+    });
+
+    resetBtn.addEventListener("click", async () => {
+      try {
+        await invoke("reset_result");
+      } catch (err) {
+        // Resetting is just clearing cached state - if the call itself
+        // fails, refreshing still re-renders whatever state is actually
+        // current rather than leaving the UI stuck.
+      }
+      refresh();
+    });
+
+    // The default/reset screen: two explicit entry points, since the app has
+    // no persistent main window otherwise and the old plain-text empty-state
+    // left "how do I start" undiscoverable. Both buttons hand off to the
+    // same Rust-side flows the tray menu already used (trigger_snip /
+    // trigger_open_file) - this window just stays open and re-renders itself
+    // once `ocr-result-updated` fires.
+    function renderChoice() {
+      resetBtn.style.display = "none";
+      contentEl.className = "choice-screen";
+      contentEl.innerHTML = "";
+
+      const icon = document.createElement("img");
+      icon.className = "choice-icon";
+      icon.src = "assets/app-icon.png";
+      icon.alt = "Img2TypTeX";
+      contentEl.appendChild(icon);
+
+      const hint = document.createElement("p");
+      hint.className = "empty-state";
+      hint.textContent = "Choose how to bring in an equation:";
+      contentEl.appendChild(hint);
+
+      const buttons = document.createElement("div");
+      buttons.className = "choice-buttons";
+
+      const snipBtn = document.createElement("button");
+      snipBtn.className = "primary choice-btn";
+      snipBtn.textContent = "Take Screenshot";
+      snipBtn.addEventListener("click", () => {
+        invoke("start_snip").catch(() => {});
+      });
+      buttons.appendChild(snipBtn);
+
+      const uploadBtn = document.createElement("button");
+      uploadBtn.className = "choice-btn";
+      uploadBtn.textContent = "Upload Image File";
+      uploadBtn.addEventListener("click", () => {
+        invoke("start_upload").catch(() => {});
+      });
+      buttons.appendChild(uploadBtn);
+
+      contentEl.appendChild(buttons);
+    }
+
+    function renderError(message) {
+      resetBtn.style.display = "";
+      contentEl.className = "";
+      contentEl.innerHTML = "";
+
+      const box = document.createElement("div");
+      box.className = "error-box";
+      box.textContent = message;
+      contentEl.appendChild(box);
+    }
+
+    // Builds a labeled, read-only textarea plus a "Copy <thing>" button (with
+    // a toast on success/failure) inside one `.card`. Used for both the
+    // Typst output and the recognised LaTeX, which are otherwise identical
+    // in structure and behaviour.
+    function buildCopyCard(labelText, value, copyLabel) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      card.appendChild(label);
+
+      const textarea = document.createElement("textarea");
+      textarea.readOnly = true;
+      textarea.rows = 6;
+      textarea.value = value;
+      card.appendChild(textarea);
+
+      const row = document.createElement("div");
+      row.className = "row";
+      row.style.marginTop = "10px";
+
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "primary";
+      copyBtn.textContent = copyLabel;
+      row.appendChild(copyBtn);
+
+      const toast = document.createElement("span");
+      toast.className = "toast";
+      toast.textContent = "Copied!";
+      row.appendChild(toast);
+
+      card.appendChild(row);
+
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await invoke("copy_to_clipboard", { text: value });
+          toast.classList.add("visible");
+          setTimeout(() => toast.classList.remove("visible"), 1400);
+        } catch (err) {
+          toast.textContent = `Copy failed: ${err}`;
+          toast.classList.add("visible");
+        }
+      });
+
+      return card;
+    }
+
+    function renderSuccess(latex) {
+      let typst;
+      try {
+        typst = latexToTypst(latex);
+      } catch (err) {
+        renderError(`Could not convert the recognised LaTeX to Typst: ${err}`);
+        return;
+      }
+
+      resetBtn.style.display = "";
+      contentEl.className = "";
+      contentEl.innerHTML = "";
+
+      contentEl.appendChild(buildCopyCard("Typst markup", typst, "Copy Typst"));
+      contentEl.appendChild(buildCopyCard("Recognised LaTeX", latex, "Copy LaTeX"));
+    }
+
+    async function refresh() {
+      let outcome;
+      try {
+        outcome = await invoke("get_last_result");
+      } catch (err) {
+        renderError(`Could not load the result: ${err}`);
+        return;
+      }
+
+      if (!outcome) {
+        renderChoice();
+      } else if (outcome.status === "success") {
+        renderSuccess(outcome.latex);
+      } else {
+        renderError(outcome.message);
+      }
+    }
+
+    listen("ocr-result-updated", refresh);
+    refresh();
+  </script>
+</body>
+</html>

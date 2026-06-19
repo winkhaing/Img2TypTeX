@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Img2TypTeX Settings</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="app-header">
+      <h1>Settings</h1>
+      <button class="icon" id="theme-btn" title="Toggle theme">&#9728;</button>
+    </header>
+
+    <div class="field">
+      <label for="api-key">Anthropic API key</label>
+      <div class="row">
+        <input type="password" id="api-key" placeholder="sk-ant-..." />
+        <button class="icon" id="toggle-key" title="Show/hide">&#128065;</button>
+      </div>
+      <div class="hint">
+        Used to call Claude's vision API for OCR. Stored locally on this device only, never sent anywhere else.
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="model">Model</label>
+      <input type="text" id="model" list="model-suggestions" placeholder="claude-sonnet-4-6" />
+      <datalist id="model-suggestions">
+        <option value="claude-opus-4-8"></option>
+        <option value="claude-sonnet-4-6"></option>
+        <option value="claude-haiku-4-5-20251001"></option>
+      </datalist>
+      <div class="hint">Any Claude model with vision support works. Defaults to claude-sonnet-4-6.</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="row">
+      <span class="toast" id="toast">Saved</span>
+      <span class="spacer"></span>
+      <button id="cancel-btn">Cancel</button>
+      <button class="primary" id="save-btn">Save</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initTheme } from "./lib/theme.js";
+
+    const { invoke } = window.__TAURI__.core;
+
+    const apiKeyEl = document.getElementById("api-key");
+    const toggleKeyEl = document.getElementById("toggle-key");
+    const modelEl = document.getElementById("model");
+    const toastEl = document.getElementById("toast");
+
+    initTheme(document.getElementById("theme-btn"));
+
+    toggleKeyEl.addEventListener("click", () => {
+      apiKeyEl.type = apiKeyEl.type === "password" ? "text" : "password";
+    });
+
+    document.getElementById("cancel-btn").addEventListener("click", () => {
+      invoke("close_current_window").catch(() => {});
+    });
+
+    document.getElementById("save-btn").addEventListener("click", async () => {
+      const key = apiKeyEl.value.trim();
+      const model = modelEl.value.trim();
+
+      try {
+        if (key) {
+          await invoke("set_api_key", { key });
+        }
+        if (model) {
+          await invoke("set_model", { model });
+        }
+        toastEl.textContent = "Saved";
+        toastEl.classList.add("visible");
+        setTimeout(() => toastEl.classList.remove("visible"), 1400);
+      } catch (err) {
+        toastEl.textContent = `Could not save: ${err}`;
+        toastEl.classList.add("visible");
+      }
+    });
+
+    async function load() {
+      try {
+        const [key, model] = await Promise.all([
+          invoke("get_api_key"),
+          invoke("get_model"),
+        ]);
+        if (key) apiKeyEl.value = key;
+        if (model) modelEl.value = model;
+      } catch (err) {
+        toastEl.textContent = `Could not load settings: ${err}`;
+        toastEl.classList.add("visible");
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capabilities granted to all Img2TypTeX windows (overlay, result, settings). Custom app commands (capture_and_recognize, display_result, get_last_result, get_api_key, set_api_key, close_current_window, etc.) are registered via invoke_handler and are reachable from any window by default in Tauri v2 - they do not need entries here. This file only needs to grant access to core/plugin functionality that the frontend JS calls directly (event listening via window.__TAURI__.event). The dialog plugin used for the file-upload OCR path is called directly from Rust (tray menu handler), not via frontend invoke(), so it needs no entry here either.",
+  "windows": ["overlay", "result", "settings"],
+  "permissions": [
+    "core:path:default",
+    "core:event:default",
+    "core:window:default",
+    "core:app:default",
+    "core:resources:default",
+    "core:menu:default",
+    "core:tray:default"
+  ]
+}

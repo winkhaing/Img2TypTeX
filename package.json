@@ -1,0 +1,16 @@
+{
+  "name": "img2typtex",
+  "version": "0.1.0",
+  "description": "Snip a math equation anywhere on screen, OCR it, and get ready-to-paste Typst markup.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "test:converter": "node --test src/lib/converter.test.js"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}
