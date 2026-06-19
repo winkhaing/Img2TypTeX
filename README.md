@@ -11,6 +11,19 @@ Snip a math equation anywhere on screen, OCR it with Claude's vision model, and 
 
 Press **Esc** or click without dragging to cancel a snip.
 
+## Screenshots
+
+<table>
+<tr>
+<td align="center"><strong>Choose an input</strong></td>
+<td align="center"><strong>OCR result — Typst + LaTeX</strong></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/choose-input.png" width="400"></td>
+<td><img src="docs/screenshots/result-window.png" width="400"></td>
+</tr>
+</table>
+
 ## Project structure
 
 ```
