@@ -8,6 +8,17 @@ Try it online: **[img2typtex.vercel.app](https://img2typtex.vercel.app/)** — n
 
 The web version covers the same OCR-to-Typst workflow as the desktop app — screen capture (browser permitting) or image upload/drag-drop/paste — using your own Anthropic API key, entered once in the in-page Settings panel. The key is stored only in your browser's `localStorage` and sent only to the app's own `/api/ocr` endpoint; it's never saved server-side. See [`web_app/`](web_app/) for the source and [`web_app/README.md`](web_app/README.md) for local dev and deployment notes.
 
+<table>
+<tr>
+<td align="center"><strong>Choose an input</strong></td>
+<td align="center"><strong>OCR result — Typst + LaTeX</strong></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/web-choice-screen.png" width="400"></td>
+<td><img src="docs/screenshots/web-result-window.png" width="400"></td>
+</tr>
+</table>
+
 ## How it works
 
 1. Press **Alt+Shift+M** (or click the tray icon) to open a full-screen snip overlay, **or** choose **Open Image File…** from the tray menu to OCR an equation from an existing image file (PNG, JPEG, GIF, WebP, BMP) instead of the live screen.
