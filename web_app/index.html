@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Img2TypTeX</title>
+<meta name="description" content="Snip or upload a math equation, OCR it, get ready-to-paste Typst markup." />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="app-header">
+      <div>
+        <h1>Img2TypTeX</h1>
+        <div class="subtitle">Snip your screen or upload an image &middot; get Typst, ready to paste</div>
+      </div>
+      <div class="row">
+        <button class="icon" id="theme-btn" type="button" title="Toggle theme">&#9728;</button>
+        <button class="icon" id="settings-btn" type="button" title="Settings">&#9881;</button>
+      </div>
+    </header>
+
+    <div id="content" class="empty-state">Loading&hellip;</div>
+  </div>
+
+  <!-- Settings modal: API key + model, both stored client-side only -->
+  <div id="settings-backdrop" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+      <h2>Settings</h2>
+
+      <div class="field">
+        <label for="api-key">Anthropic API key</label>
+        <div class="row">
+          <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" />
+          <button class="icon" id="toggle-key" type="button" title="Show/hide key">&#128065;</button>
+        </div>
+        <div class="hint">
+          Stored only in this browser (localStorage) and sent only to this site's own
+          <code>/api/ocr</code> endpoint to call Claude's vision API &mdash; never saved on the server.
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="model">Model</label>
+        <input type="text" id="model" list="model-suggestions" placeholder="claude-sonnet-4-6" autocomplete="off" />
+        <datalist id="model-suggestions">
+          <option value="claude-opus-4-8"></option>
+          <option value="claude-sonnet-4-6"></option>
+          <option value="claude-haiku-4-5-20251001"></option>
+        </datalist>
+        <div class="hint">Any Claude model with vision support works. Defaults to claude-sonnet-4-6.</div>
+      </div>
+
+      <div class="row">
+        <span class="toast" id="settings-toast">Saved</span>
+        <span class="spacer"></span>
+        <button id="settings-cancel-btn" type="button">Cancel</button>
+        <button class="primary" id="settings-save-btn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input shared by the dropzone's click-to-browse and any
+       future "choose file" buttons. -->
+  <input type="file" id="file-input" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" style="display:none;" />
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

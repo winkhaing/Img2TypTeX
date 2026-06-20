@@ -1,0 +1,11 @@
+{
+  "name": "img2typtex-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web port of Img2TypTeX - snip or upload a math equation, OCR it with Claude's vision model, and get ready-to-paste Typst markup. Static frontend + a Vercel serverless OCR proxy, no build step.",
+  "type": "module",
+  "scripts": {
+    "dev": "npx vercel dev",
+    "test:converter": "node --test lib/converter.test.js"
+  }
+}

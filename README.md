@@ -2,6 +2,12 @@
 
 Snip a math equation anywhere on screen, OCR it with Claude's vision model, and get ready-to-paste [Typst](https://typst.app) math markup on your clipboard. Same workflow as Mathpix's snipping tool, targeting Typst instead of LaTeX.
 
+## Web version
+
+Try it online: **[img2typtex.vercel.app](https://img2typtex.vercel.app/)** — no install required.
+
+The web version covers the same OCR-to-Typst workflow as the desktop app — screen capture (browser permitting) or image upload/drag-drop/paste — using your own Anthropic API key, entered once in the in-page Settings panel. The key is stored only in your browser's `localStorage` and sent only to the app's own `/api/ocr` endpoint; it's never saved server-side. See [`web_app/`](web_app/) for the source and [`web_app/README.md`](web_app/README.md) for local dev and deployment notes.
+
 ## How it works
 
 1. Press **Alt+Shift+M** (or click the tray icon) to open a full-screen snip overlay, **or** choose **Open Image File…** from the tray menu to OCR an equation from an existing image file (PNG, JPEG, GIF, WebP, BMP) instead of the live screen.
@@ -45,6 +51,10 @@ Img2TypTeX/
 │   │   └── main.rs
 │   ├── capabilities/default.json
 │   └── tauri.conf.json
+├── web_app/                   # Web port - live at img2typtex.vercel.app
+│   ├── index.html / style.css / app.js
+│   ├── api/ocr.js             # Vercel serverless OCR proxy (BYOK, no server-side key)
+│   └── lib/converter.js       # Same LaTeX -> Typst transpiler, copied verbatim
 └── package.json
 ```
 

@@ -1,0 +1,446 @@
+/* Same dark/light variable palette as the desktop app's src/style.css, so
+   the web version reads as the same product. Dark is the default (no
+   data-theme attribute, or data-theme="dark"); [data-theme="light"] swaps
+   the same variable set for a light palette. The active theme is persisted
+   in localStorage (see app.js) - there is no second window to keep in sync
+   here, unlike the Tauri app's multi-window setup. */
+
+:root {
+  --bg: #1c1e22;
+  --bg-elevated: #25282d;
+  --bg-input: #1a1c20;
+  --text: #e8e9eb;
+  --text-muted: #9aa0a8;
+  --accent: #2dd4bf;
+  --accent-hover: #25b8a5;
+  --accent-text: #0b1413;
+  --danger: #f87171;
+  --danger-bg: #3a2222;
+  --danger-text: #ffd9d9;
+  --border: #383b41;
+  font-size: 14px;
+}
+
+:root[data-theme="light"] {
+  --bg: #f5f6f7;
+  --bg-elevated: #ffffff;
+  --bg-input: #ffffff;
+  --text: #1c1e22;
+  --text-muted: #6b7280;
+  --accent: #0d9488;
+  --accent-hover: #0b7c72;
+  --accent-text: #ffffff;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --danger-text: #7f1d1d;
+  --border: #d8dadd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 20px 32px;
+  gap: 14px;
+}
+
+header.app-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+header.app-header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+header.app-header .subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+kbd {
+  display: inline-block;
+  font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: 0 1px;
+  line-height: 1.5;
+}
+
+button {
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+button.icon {
+  padding: 5px 8px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+button.icon.danger:hover {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+  width: 100%;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+textarea {
+  font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field .hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.row.end {
+  justify-content: flex-end;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.card + .card {
+  margin-top: 14px;
+}
+
+.error-box {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  color: var(--danger-text);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.empty-state {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#content {
+  flex: 1;
+  min-height: 0;
+}
+
+/* The default/reset screen: two big entry-point buttons, vertically centered
+   in the space below the header. */
+#content.choice-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  min-height: 50vh;
+}
+
+.choice-screen .empty-state {
+  margin: 0;
+}
+
+.choice-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.choice-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.choice-btn {
+  min-width: 160px;
+  padding: 14px 22px;
+  font-size: 14px;
+}
+
+.toast {
+  font-size: 12px;
+  color: var(--accent);
+  height: 16px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.toast.visible {
+  opacity: 1;
+}
+
+details summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+details textarea {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* --- Upload / paste zone -------------------------------------------------- */
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+.dropzone .dz-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.dropzone .dz-hint {
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+/* --- Loading state --------------------------------------------------------- */
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 40vh;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Screen-capture crop overlay ------------------------------------------ */
+
+.crop-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0b0c0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.crop-overlay #crop-hint {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 22, 0.85);
+  color: #eee;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.crop-stage {
+  position: relative;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 90px);
+  cursor: crosshair;
+}
+
+.crop-stage canvas {
+  display: block;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 90px);
+  user-select: none;
+}
+
+.crop-selection {
+  position: absolute;
+  display: none;
+  border: 1.5px solid #2dd4bf;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.crop-dimensions {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  background: rgba(20, 20, 22, 0.9);
+  color: #2dd4bf;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.crop-overlay .row {
+  margin-top: 16px;
+}
+
+/* --- Settings modal -------------------------------------------------------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.modal h2 {
+  margin: 0 0 16px;
+  font-size: 15px;
+}

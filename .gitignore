@@ -17,3 +17,7 @@ src-tauri/gen/
 # runtime, never checked into the repo)
 .env
 .env.*
+
+# Vercel CLI local project link (web_app/) - no secrets in here, but it's
+# machine-specific and shouldn't be committed
+.vercel
